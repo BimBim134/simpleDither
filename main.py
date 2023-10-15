@@ -30,4 +30,20 @@ palette = np.array([[[32, 26, 102],
 
 dither.processPicture('/home/bimbim/Codes/simpleDither/IN/DSCF6852.JPG',
                       (128, 128),
-                      pico8_palette)
+                      pico8_palette,
+                      'atk')
+
+dither.processPicture('/home/bimbim/Codes/simpleDither/IN/DSCF6852.JPG',
+                      (128, 128),
+                      pico8_palette,
+                      'jjn')
+
+dither.processPicture('/home/bimbim/Codes/simpleDither/IN/DSCF6852.JPG',
+                      (128, 128),
+                      pico8_palette,
+                      'fs')
+
+dither.processPicture('/home/bimbim/Codes/simpleDither/IN/DSCF6852.JPG',
+                      (128, 128),
+                      pico8_palette,
+                      'simple')

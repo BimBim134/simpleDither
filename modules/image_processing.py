@@ -56,7 +56,7 @@ def findClosest(value, palette):
 
 
 @jit(nopython=True, cache=True)
-def dithering(image, palette, bias=2):
+def dithering_atk(image, palette):
     """
     The dithering function takes an image and a palette of colors, and returns
     a new image with the same dimensions as the original. The function uses dithering
@@ -69,8 +69,6 @@ def dithering(image, palette, bias=2):
     :return: A new image that has been dithered
     :doc-author: Trelent
     """
-    # this function will constrain image color to palette color
-
     image = np.concatenate(
         (np.zeros((image.shape[0], 1, 3)), image,
          np.zeros((image.shape[0], 2, 3))),
@@ -88,9 +86,9 @@ def dithering(image, palette, bias=2):
             output[x, y, :] = newPixel
             # atkinson algorithm
             # . * 1 1
-            # 1 1 1 .
+            # 1 1 1 .       x 1/6
             # . 1 . .
-            quant_err = (oldPixel - newPixel) / (6 + bias)
+            quant_err = (oldPixel - newPixel) / 6
             output[x+1, y, :] = output[x+1, y, :] + quant_err
             output[x+2, y, :] = output[x+2, y, :] + quant_err
             output[x-1, y+1, :] = output[x-1, y+1, :] + quant_err
@@ -103,6 +101,151 @@ def dithering(image, palette, bias=2):
     output = np.minimum(output, np.ones(output.shape))
     output = np.maximum(output, np.zeros(output.shape))
     return output
+
+
+@jit(nopython=True, cache=True)
+def dithering_jjn(image, palette):
+    """
+    The dithering function takes an image and a palette of colors, and returns
+    a new image with the same dimensions as the original. The function uses dithering
+    to constrain all pixels in the output to be one of the colors in the palette.
+    The algorithm used is Jarvis-Judice-Ninke Dithering Algorithm.
+    
+    :param image: Pass the image to be processed
+    :param palette: Specify the color palette to use
+    :return: A new image that has been dithered
+    :doc-author: Trelent
+    """
+    # Extend the image dimensions for error diffusion
+    image = np.concatenate(
+        (np.zeros((image.shape[0], 2, 3)), image,
+         np.zeros((image.shape[0], 2, 3)),
+         np.zeros((image.shape[0], 1, 3))),
+        axis=1
+    )
+    image = np.concatenate(
+        (image, np.zeros((2, image.shape[1], 3))),
+        axis=0
+    )
+    output = np.copy(image)
+    for y in range(1, output.shape[1] - 2):
+        for x in range(0, output.shape[0] - 2):
+            oldPixel = np.copy(output[x, y, :])
+            newPixel = findClosest(oldPixel, palette)
+            output[x, y, :] = newPixel
+            # JJN dithering algorithm
+            # . . * 7 5
+            # 3 5 7 5 3     * 1/48
+            # 1 3 5 3 1
+            quant_err = oldPixel - newPixel
+            output[x+1, y, :] += quant_err * 7 / 48
+            output[x+2, y, :] += quant_err * 5 / 48
+            output[x-2, y+1, :] += quant_err * 3 / 48
+            output[x-1, y+1, :] += quant_err * 5 / 48
+            output[x, y+1, :] += quant_err * 7 / 48
+            output[x+1, y+1, :] += quant_err * 5 / 48
+            output[x+2, y+1, :] += quant_err * 3 / 48
+            output[x-2, y+2, :] += quant_err * 1 / 48
+            output[x-1, y+2, :] += quant_err * 3 / 48
+            output[x, y+2, :] += quant_err * 5 / 48
+            output[x+1, y+2, :] += quant_err * 3 / 48
+            output[x+2, y+2, :] += quant_err * 1 / 48
+    
+    # Crop the un-converged pixels
+    output = output[:-2, 2:-2, :]
+    
+    # Clipping
+    output = np.minimum(output, np.ones(output.shape))
+    output = np.maximum(output, np.zeros(output.shape))
+    
+    return output
+
+@jit(nopython=True, cache=True)
+def dithering_simple(image, palette):
+    """
+    The dithering function takes an image and a palette of colors, and returns
+    a new image with the same dimensions as the original. The function uses dithering
+    to constrain all pixels in the output to be one of the colors in the palette.
+    The algorithm used is a simple 2D error diffusion matrix.
+    
+    :param image: Pass the image to be processed
+    :param palette: Specify the color palette to use
+    :return: A new image that has been dithered
+    :doc-author: Trelent
+    """
+    # Extend the image dimensions for error diffusion
+    image = np.concatenate(
+        (image,
+         np.zeros((image.shape[0], 1, 3))),
+        axis=1
+    )
+    image = np.concatenate(
+        (image, np.zeros((1, image.shape[1], 3))),
+        axis=0
+    )
+    output = np.copy(image)
+    for y in range(1, output.shape[1] - 1):
+        for x in range(0, output.shape[0] - 1):
+            oldPixel = np.copy(output[x, y, :])
+            newPixel = findClosest(oldPixel, palette)
+            output[x, y, :] = newPixel
+            
+            # Simple 2D error diffusion matrix
+            quant_err = oldPixel - newPixel
+            output[x+1, y, :] += quant_err * 0.5
+            output[x, y+1, :] += quant_err * 0.5
+    # Crop the un-converged pixels
+    output = output[:-1, :-1, :]
+    # Clipping
+    output = np.minimum(output, np.ones(output.shape))
+    output = np.maximum(output, np.zeros(output.shape))   
+    return output
+
+@jit(nopython=True, cache=True)
+def dithering_fs(image, palette):
+    """
+    The dithering function takes an image and a palette of colors and returns
+    a new image with the same dimensions as the original. The function uses dithering
+    to constrain all pixels in the output to be one of the colors in the palette.
+    The algorithm used is the Floyd-Steinberg Dithering Algorithm.
+
+    :param image: Pass the image to be processed
+    :param palette: Specify the color palette to use
+    :return: A new image that has been dithered
+    :doc-author: Trelent
+    """
+    # Extend the image dimensions for error diffusion
+    image = np.concatenate(
+        (np.zeros((image.shape[0], 1, 3)), image,
+         np.zeros((image.shape[0], 1, 3))),
+        axis=1
+    )
+    image = np.concatenate(
+        (image, np.zeros((1, image.shape[1], 3))),
+        axis=0
+    )
+    output = np.copy(image)
+    for y in range(1, output.shape[1] - 1):
+        for x in range(0, output.shape[0] - 1):
+            oldPixel = np.copy(output[x, y, :])
+            newPixel = findClosest(oldPixel, palette)
+            output[x, y, :] = newPixel
+            # Floyd-Steinberg dithering algorithm
+            # . * 7
+            # 3 5 1
+            quant_err = oldPixel - newPixel
+            output[x+1, y, :] += quant_err * 7 / 16
+            output[x-1, y+1, :] += quant_err * 3 / 16
+            output[x, y+1, :] += quant_err * 5 / 16
+            output[x+1, y+1, :] += quant_err * 1 / 16
+    # Crop the un-converged pixels
+    output = output[:-1, 1:-1, :]
+    # Clipping
+    output = np.minimum(output, np.ones(output.shape))
+    output = np.maximum(output, np.zeros(output.shape))
+
+    return output
+
 
 
 def open_image(filename):
@@ -134,7 +277,7 @@ def save_image(image, filename):
     image.save(filename)
 
 
-def processPicture(filename, size, palette):
+def processPicture(filename, size, palette, algo='atk'):
     """
     The processPicture function takes in a filename, size, and palette.
     It opens the image from the filename and resizes it to the given size.
@@ -150,7 +293,14 @@ def processPicture(filename, size, palette):
     input_image = open_image(filename)
     image = crop(input_image, squareCropCoordinate(input_image))
     image = resize(image, (size[0], size[1], 3))
-    out = dithering(image, palette)
+    if algo == 'atk': 
+        out = dithering_atk(image, palette)
+    elif algo == 'jjn':
+        out = dithering_jjn(image, palette)
+    elif algo == 'fs':
+        out = dithering_fs(image, palette)
+    elif algo == 'simple':
+        out = dithering_simple(image, palette)
     path = Path(filename)
-    output_path = f'{path.parent}/{path.stem}_dithered{path.suffix}'
+    output_path = f'{path.parent}/{path.stem}_dithered_{algo}{path.suffix}'
     save_image(out, output_path)
