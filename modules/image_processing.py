@@ -2,14 +2,15 @@ from pathlib import Path
 from pprint import pprint
 
 import numpy as np
-from numba import jit
+from numba import njit
 from PIL import Image
 from skimage import io
 from skimage.transform import resize
 from skimage.util import crop
+import matplotlib.pyplot as plt
 
 
-#@jit(nopython=True)
+@njit(cache=True)
 def squareCropCoordinate(image):
     """
     The squareCropCoordinate function takes an image as input and returns the coordinates of the largest square possible in that image.
@@ -35,8 +36,8 @@ def squareCropCoordinate(image):
         return ((0, 0), (deltaY, deltaY), (0, 0))
 
 
-#@jit(nopython=True)
-def findClosest(value, palette):
+@njit(cache=True)
+def findClosest(value, palette, type='euclidian'):
     """
     The findClosest function takes in a value and a palette.
     The value is an RGB triplet, while the palette is an array of RGB triplets.
@@ -53,11 +54,14 @@ def findClosest(value, palette):
     dx = x - value[0]
     dy = y - value[1]
     dz = z - value[2]
-    dist = np.sqrt(dx**2 + dy**2 + dz**2)
+    if type == 'euclidian':
+        dist = np.sqrt(dx**2 + dy**2 + dz**2)
+    else:
+        dist = np.abs(dx) + np.abs(dy) + np.abs(dz)
     return palette[0, np.argmin(dist), :]
 
 
-#@jit(nopython=True)
+@njit(cache=True)
 def dithering_atk(image, palette):
     """
     The dithering function takes an image and a palette of colors, and returns
@@ -105,7 +109,7 @@ def dithering_atk(image, palette):
     return output
 
 
-#@jit(nopython=True)
+@njit(cache=True)
 def dithering_jjn(image, palette):
     """
     The dithering function takes an image and a palette of colors, and returns
@@ -163,7 +167,7 @@ def dithering_jjn(image, palette):
     return output
 
 
-#@jit(nopython=True)
+@njit(cache=True)
 def dithering_simple(image, palette):
     """
     The dithering function takes an image and a palette of colors, and returns
@@ -205,7 +209,7 @@ def dithering_simple(image, palette):
     return output
 
 
-#@jit(nopython=True)
+@njit(cache=True)
 def dithering_fs(image, palette):
     """
     The dithering function takes an image and a palette of colors and returns
@@ -251,7 +255,7 @@ def dithering_fs(image, palette):
     return output
 
 
-#@jit(nopython=True)
+@njit(cache=True)
 def generate_bayer_matrix(size):
     """
     The generate_bayer_matrix function takes a size parameter and returns a 2D numpy array of uint8s.
@@ -280,7 +284,7 @@ def generate_bayer_matrix(size):
     return bayer_matrix
 
 
-#@jit(nopython=True)
+@njit(cache=True)
 def dithering_bayer(image, palette, matrix_size=4):
     """
     The dithering_bayer function takes an image and a palette as input,
@@ -315,10 +319,26 @@ def dithering_bayer(image, palette, matrix_size=4):
             threshold = bayer_matrix[y % matrix_size, x % matrix_size]
 
             # Compare the pixel value to the threshold and map it to the nearest palette color
-            output[y, x, :] = findClosest(pixel_value+threshold, palette)
+            output[y, x, :] = findClosest(pixel_value+threshold, palette, type='linear')
 
     return output
 
+
+@njit(cache=True)
+def closest(image, palette, dist='linear'):
+    # Get the dimensions of the input image
+    image_height, image_width, _ = image.shape
+
+    # Create an output image with the same dimensions as the input image
+    output = np.zeros_like(image)
+
+    # Iterate through the input image
+    for y in range(image_height):
+        for x in range(image_width):
+            pixel_value = image[y, x, :]
+            # Compare the pixel value to the threshold and map it to the nearest palette color
+            output[y, x, :] = findClosest(pixel_value, palette, type=dist)
+    return output
 
 def open_image(filename):
     """
@@ -374,17 +394,25 @@ def processPicture(filename, size, palette, algo='atk', matrix_size=4):
         out= dithering_fs(image, palette)
     elif algo == 'bayer':
         out= dithering_bayer(image, palette, matrix_size)
-    else:
-        algo = 'simple'
+        algo += f'_m{matrix_size}'
+    elif algo == 'simple':
         out= dithering_simple(image, palette)
+    else:
+        out= closest(image, palette)
+        algo = 'closest'
     path= Path(filename)
     output_path= f'{path.parent}/{path.stem}_dithered_{algo}.png'
     save_image(out, output_path)
+    print(f'saved : {output_path}')
 
 
 def processPicture_paralel(args):
     filename, size, palette, algo = args[0], args[1], args[2], args[3]
-    processPicture(filename, size, palette, algo)
+    try :
+         matrix_size = args[4]
+    except:
+        matrix_size = 4
+    processPicture(filename, size, palette, algo, matrix_size)
 
 
 def precompile():
@@ -402,4 +430,9 @@ def precompile():
     print('precompiling done')
 
 
-# precompile()
+def save_color_palette(palette, filename):
+    plt.figure()
+    plt.imshow(palette)
+    plt.axis('off')
+    plt.savefig(filename)
+    plt.close()
