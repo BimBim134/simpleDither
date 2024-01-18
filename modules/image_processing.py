@@ -1,5 +1,4 @@
 from pathlib import Path
-from pprint import pprint
 
 import numpy as np
 from numba import njit
@@ -7,12 +6,52 @@ from PIL import Image
 from skimage import io
 from skimage.transform import resize
 from skimage.util import crop
-import matplotlib.pyplot as plt
+
+PICO8 = np.array([[
+    [0, 0, 0],           # Black
+    [29, 43, 83],        # Dark Blue
+    [126, 37, 83],       # Dark Purple
+    [0, 135, 81],        # Dark Green
+    [171, 82, 54],       # Brown
+    [95, 87, 79],        # Dark Gray
+    [194, 195, 199],     # Light Gray
+    [255, 241, 232],     # White
+    [255, 0, 77],        # Red
+    [255, 163, 0],       # Orange
+    [255, 236, 39],      # Yellow
+    [0, 228, 54],        # Green
+    [41, 173, 255],      # Blue
+    [131, 118, 156],     # Indigo
+    [255, 119, 168],     # Pink
+    [255, 204, 170]      # Peach
+]]) /255
+
+BW = np.array([[[0, 0, 0],
+                 [255, 255, 255]]]) / 255
+
+RGB = np.array([[
+    [0, 0, 0], 
+    [255, 0, 0],
+    [0, 255, 0],
+    [255, 255, 0],
+    [0, 0, 255],
+    [255, 0, 255],
+    [0, 255, 255],
+    [255, 255, 0],
+    [255, 255, 255]
+]]) /255
 
 
-class Dimg:
-    def __init__(self) -> None:
-        pass
+MEL = np.array([[
+    [0, 0, 0], 
+    [231, 70, 69],
+    [251, 119, 86],
+    [250, 205, 96],
+    [253, 250, 102],
+    [26, 192, 198],
+    [255, 255, 255]
+]]) /255
+
 
 @njit(cache=True)
 def squareCropCoordinate(image):
@@ -80,6 +119,7 @@ def dithering_atk(image, palette):
     output = np.minimum(output, np.ones(output.shape))
     output = np.maximum(output, np.zeros(output.shape))
     return output
+
 
 
 @njit(cache=True)
@@ -186,6 +226,92 @@ def dithering_fs(image, palette):
 
 
 @njit(cache=True)
+def dithering_Stucki(image, palette):
+    # Extend the image dimensions for error diffusion
+    image = np.concatenate(
+        (np.zeros((image.shape[0], 3, 3)),
+         image,
+         np.zeros((image.shape[0], 2, 3))),
+        axis=1)
+    image = np.concatenate(
+        (image,
+         np.zeros((2, image.shape[1], 3))),axis=0)
+    output = np.copy(image)
+    for y in range(0, output.shape[0] - 3):
+        for x in range(2, output.shape[1] - 2):
+            old_pixel = np.copy(output[y, x, :])
+            new_pixel = findClosest(old_pixel, palette)
+            output[y, x, :] = new_pixel
+
+            # Stucki algorithm
+            #             X   8   4
+            # 2   4   8   4   2
+            # 1   2   4   2   1
+
+            quant_err = (old_pixel - new_pixel) / 42
+            output[y, x + 1, :] = output[y, x + 1, :] + quant_err * 8
+            output[y, x + 2, :] = output[y, x + 2, :] + quant_err * 4
+
+            output[y + 1, x - 2, :] = output[y + 1, x - 2, :] + quant_err * 2
+            output[y + 1, x - 1, :] = output[y + 1, x - 1, :] + quant_err * 4
+            output[y + 1, x, :] = output[y + 1, x, :] + quant_err * 8
+            output[y + 1, x + 1, :] = output[y + 1, x + 1, :] + quant_err * 4
+            output[y + 1, x + 2, :] = output[y + 1, x + 2, :] + quant_err * 2
+
+            output[y + 2, x - 2, :] = output[y + 2, x - 2, :] + quant_err * 1
+            output[y + 2, x - 1, :] = output[y + 2, x - 1, :] + quant_err * 2
+            output[y + 2, x, :] = output[y + 2, x, :] + quant_err * 4
+            output[y + 2, x + 1, :] = output[y + 2, x + 1, :] + quant_err * 2
+            output[y + 2, x + 2, :] = output[y + 2, x + 2, :] + quant_err * 1
+    # Crop the un-converged pixels
+    output = output[0:-3, 3:-3, :]
+    # Clipping
+    output = np.minimum(output, np.ones(output.shape))
+    output = np.maximum(output, np.zeros(output.shape))
+
+    return output
+
+
+@njit(cache=True)
+def dithering_Burkes(image, palette):
+    # Extend the image dimensions for error diffusion
+    image = np.concatenate(
+        (np.zeros((image.shape[0], 3, 3)),
+         image,
+         np.zeros((image.shape[0], 2, 3))),
+        axis=1)
+    image = np.concatenate(
+        (image,
+         np.zeros((2, image.shape[1], 3))),axis=0)
+    output = np.copy(image)
+    for y in range(0, output.shape[0] - 3):
+        for x in range(2, output.shape[1] - 2):
+            old_pixel = np.copy(output[y, x, :])
+            new_pixel = findClosest(old_pixel, palette)
+            output[y, x, :] = new_pixel
+
+            # Burkes algorithm
+            quant_err = (old_pixel - new_pixel) / 32
+            output[y, x + 1, :] = output[y, x + 1, :] + quant_err * 8
+            output[y, x + 2, :] = output[y, x + 2, :] + quant_err * 4
+
+            output[y + 1, x - 2, :] = output[y + 1, x - 2, :] + quant_err * 2
+            output[y + 1, x - 1, :] = output[y + 1, x - 1, :] + quant_err * 4
+            output[y + 1, x, :] = output[y + 1, x, :] + quant_err * 8
+            output[y + 1, x + 1, :] = output[y + 1, x + 1, :] + quant_err * 4
+            output[y + 1, x + 2, :] = output[y + 1, x + 2, :] + quant_err * 2
+
+    # Crop the un-converged pixels
+    output = output[0:-3, 3:-3, :]
+    # Clipping
+    output = np.minimum(output, np.ones(output.shape))
+    output = np.maximum(output, np.zeros(output.shape))
+
+    return output
+
+
+
+@njit(cache=True)
 def generate_bayer_matrix(size):
     if size < 2:
         raise ValueError("Bayer matrix size must be at least 2x2.")
@@ -254,33 +380,70 @@ def save_image(image, filename):
     image.save(filename)
 
 
-def processPicture(filename, size, palette, algo='atk', matrix_size=4, gamma=1):
-    input_image= open_image(filename, gamma)
-    image= crop(input_image, squareCropCoordinate(input_image))
-    image= resize(image, (size[0], size[1], 3))
-    if algo == 'atk':
-        out= dithering_atk(image, palette)
-    elif algo == 'jjn':
-        out= dithering_jjn(image, palette)
-    elif algo == 'fs':
-        out= dithering_fs(image, palette)
-    elif algo == 'bayer':
-        out= dithering_bayer(image, palette, matrix_size)
-        algo += f'_m{matrix_size}'
-    elif algo == 'simple':
-        out= dithering_simple(image, palette)
-    else:
-        out= closest(image, palette)
-        algo = 'closest'
-    path= Path(filename)
-    output_path= f'{path.parent}/{path.stem}_dithered_{algo}_{matrix_size}_{gamma:.1f}.png'
-    save_image(out, output_path)
-    print(f'saved : {output_path}')
+class dimg:
+    def __init__(self, path) -> None:
+        self.path = Path(path)
+        self.img = open_image(path)
+        self.result = self.img
+        self.palette = BW
+        self.algorithm = ''
 
+    def resize(self, target_width=None, target_height=None):
+        img = np.copy(self.img)
+        if target_width and target_height:
+            resized_img = resize(img, (target_width, target_height))
+        elif target_width:
+            width_percent = (target_width / float(img.shape[0]))
+            target_height = int((float(img.shape[1]) * float(width_percent)))
+            resized_img = resize(img, (target_width, target_height))
+        elif target_height:
+            height_percent = (target_height / float(img.shape[1]))
+            target_width = int((float(img.shape[0]) * float(height_percent)))
+            resized_img = resize(img, (target_width, target_height))
+        else:
+            raise ValueError("Either target_width or target_height must be specified.")
+        self.algorithm += '_resized'  
+        self.img = resized_img
+    
+    def square_crop(self):
+        self.algorithm += '_square'
+        self.img = crop(self.img, squareCropCoordinate(self.img))
 
-def processPicture_paralel(args):
-    filename, size, palette, algo, matrix_size, gamma = args[0], args[1], args[2], args[3], args[4], args[5]
-    processPicture(filename, size, palette, algo, matrix_size, gamma)
+    def closest(self, dist = 'euclidean'):
+        self.algorithm += '_closest'
+        self.img = closest(self.img, self.palette, dist)
+
+    def simple(self):
+        self.algorithm += '_simple'
+        self.img = dithering_simple(self.img, self.palette)
+    
+    def fs(self):
+        self.algorithm += '_fs'
+        self.img = dithering_fs(self.img, self.palette)
+
+    def atk(self):
+        self.algorithm += '_atk'
+        self.img = dithering_atk(self.img, self.palette)
+
+    def jjn(self):
+        self.algorithm += '_jjn'
+        self.img = dithering_jjn(self.img, self.palette)
+    
+    def bayer(self, matrix_size):
+        self.algorithm += f'_bayer{matrix_size}'
+        self.img = dithering_bayer(self.img, self.palette, matrix_size)
+    
+    def stucki(self):
+        self.algorithm += '_stucki'
+        self.img = dithering_Stucki(self.img, self.palette)
+    
+    def burkes(self):
+        self.algorithm += '_burkes'
+        self.img = dithering_Burkes(self.img, self.palette)
+    
+    def save(self):
+        output_path = str(self.path)[:-len(self.path.suffix)]+self.algorithm+'.png'
+        save_image(self.img, output_path)
 
 
 def precompile():
@@ -296,11 +459,3 @@ def precompile():
     dithering_simple(ar, palette)
     dithering_bayer(ar, palette, 4)
     print('precompiling done')
-
-
-def save_color_palette(palette, filename):
-    plt.figure()
-    plt.imshow(palette)
-    plt.axis('off')
-    plt.savefig(filename)
-    plt.close()
