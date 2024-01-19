@@ -2,15 +2,14 @@
 import numpy as np
 from multiprocessing import Pool
 
-import modules.image_processing as dither
-import modules.palette as pal
+import image_processing as dither
 
 img_path = 'IN/DSCF9150.JPG'
 
 img = dither.dimg(img_path)
 img.palette = dither.GAMEBOY
-img.square_crop()
-img.resize(target_width=140)
+# img.square_crop()
+img.resize(target_width=160)
 img.bayer(16)
 # img.fs()
 # img.atk()
