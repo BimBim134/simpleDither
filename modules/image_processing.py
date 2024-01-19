@@ -42,15 +42,134 @@ RGB = np.array([[
 ]]) /255
 
 
-MEL = np.array([[
-    [0, 0, 0], 
-    [231, 70, 69],
-    [251, 119, 86],
-    [250, 205, 96],
-    [253, 250, 102],
-    [26, 192, 198],
-    [255, 255, 255]
-]]) /255
+APPLE_II = np.array([[
+    [0, 0, 0],           # Black
+    [174, 0, 0],         # Red
+    [0, 174, 0],         # Green
+    [174, 87, 0],        # Brown
+    [0, 0, 174],         # Blue
+    [174, 0, 174],       # Magenta
+    [0, 174, 174],       # Cyan
+    [174, 174, 174],     # White
+    [116, 116, 116],     # Gray
+    [255, 87, 87],       # Light Red
+    [87, 255, 87],       # Light Green
+    [255, 255, 87],      # Yellow
+    [87, 87, 255],       # Light Blue
+    [255, 87, 255],      # Light Magenta
+    [87, 255, 255],      # Light Cyan
+    [255, 255, 255]      # Bright White
+]]) / 255
+
+AMSTRAD_CPC = np.array([[
+    [0, 0, 0],           # Black
+    [0, 0, 168],         # Blue
+    [0, 0, 255],         # Bright Blue
+    [168, 0, 0],         # Red
+    [168, 0, 168],       # Magenta
+    [168, 0, 255],       # Mauve
+    [255, 0, 0],         # Bright Red
+    [255, 0, 168],       # Purple
+    [255, 0, 255],       # Bright Magenta
+    [0, 168, 0],         # Green
+    [0, 168, 168],       # Cyan
+    [0, 168, 255],       # Sky Blue
+    [168, 168, 0],       # Yellow
+    [168, 168, 168],     # White
+    [168, 168, 255],     # Pastel Blue
+    [255, 168, 0],       # Orange
+    [255, 168, 168],     # Pink
+    [255, 168, 255],     # Pastel Magenta
+    [0, 255, 0],         # Bright Green
+    [0, 255, 168],       # Sea Green
+    [0, 255, 255],       # Bright Cyan
+    [168, 255, 0],       # Lime
+    [168, 255, 168],     # Pastel Green
+    [168, 255, 255],     # Pastel Cyan
+    [255, 255, 0],       # Bright Yellow
+    [255, 255, 168],     # Pastel Yellow
+    [255, 255, 255]      # Bright White
+]]) / 255
+
+COMMODORE_64 = np.array([[
+    [0, 0, 0],             # Black
+    [255, 255, 255],       # White
+    [136, 0, 0],           # Red
+    [170, 255, 238],       # Cyan
+    [204, 68, 204],        # Violet / Purple
+    [0, 204, 85],          # Green
+    [0, 0, 170],           # Blue
+    [238, 238, 119],       # Yellow
+    [221, 136, 85],        # Orange
+    [102, 68, 0],          # Brown
+    [255, 119, 119],       # Light Red
+    [51, 51, 51],          # Dark Grey / Grey 1
+    [119, 119, 119],       # Grey 2
+    [170, 255, 102],       # Light Green
+    [0, 136, 255],         # Light Blue
+    [187, 187, 187]        # Light Grey / Grey 3
+]]) / 255
+
+WLK44 = np.array([[
+    [2, 9, 24],         # #020918
+    [66, 78, 102],      # #424e66
+    [147, 165, 190],    # #93a5be
+    [242, 242, 242],    # #f2f2f2
+    [255, 255, 153],    # #ffff99
+    [255, 198, 26],     # #ffc61a
+    [162, 178, 10],     # #a2b20a
+    [69, 146, 1],       # #459201
+    [77, 10, 0],        # #4d0a00
+    [157, 44, 7],       # #9d2c07
+    [234, 125, 16],     # #ea7d10
+    [248, 190, 73],     # #f8be49
+    [195, 247, 135],    # #c3f787
+    [71, 209, 99],      # #47d163
+    [16, 122, 104],     # #107a68
+    [1, 37, 60],        # #01253c
+    [8, 37, 37],        # #082525
+    [3, 104, 62],       # #03683e
+    [33, 176, 57],      # #21b039
+    [141, 243, 79],     # #8df34f
+    [153, 231, 244],    # #99e7f4
+    [18, 194, 248],     # #12c2f8
+    [3, 65, 181],       # #0341b5
+    [2, 10, 85],        # #020a55
+    [3, 13, 48],        # #030d30
+    [11, 111, 157],     # #0b6f9d
+    [34, 226, 213],     # #22e2d5
+    [216, 120, 237],    # #d878ed
+    [146, 50, 236],     # #9232ec
+    [48, 0, 143],       # #30008f
+    [22, 1, 50],        # #160132
+    [70, 4, 75],        # #46024b
+    [131, 1, 101],      # #830165
+    [185, 19, 141],     # #b9138d
+    [224, 87, 201],     # #e057c9
+    [250, 163, 171],    # #faa3ab
+    [239, 93, 127],     # #ef5d7f
+    [238, 17, 61],      # #ee113d
+    [152, 11, 28],      # #980b1c
+    [63, 4, 9],         # #3f0409
+    [25, 4, 0],         # #190400
+    [186, 80, 23],      # #ba5017
+    [244, 150, 78],     # #f4964e
+    [254, 204, 129],    # #fecc81
+]]) / 255
+
+TWOBIT_DEMICHROME = np.array([[
+    [33, 30, 32],       # #211e20
+    [85, 85, 104],      # #555568
+    [160, 160, 139],    # #a0a08b
+    [233, 239, 236],    # #e9efec
+]])/255
+
+GAMEBOY = np.array([[
+    [32, 32, 32],       # #202020
+    [94, 103, 69],      # #5e6745
+    [174, 186, 137],    # #aeba89
+    [227, 238, 192],    # #e3eec0
+]])/255
 
 
 @njit(cache=True)
@@ -244,7 +363,7 @@ def dithering_Stucki(image, palette):
             output[y, x, :] = new_pixel
 
             # Stucki algorithm
-            #             X   8   4
+            #         X   8   4
             # 2   4   8   4   2
             # 1   2   4   2   1
 
@@ -309,6 +428,87 @@ def dithering_Burkes(image, palette):
 
     return output
 
+@njit(cache=True)
+def dithering_twoRowSierra(image, palette):
+    # Extend the image dimensions for error diffusion
+    image = np.concatenate(
+        (np.zeros((image.shape[0], 3, 3)),
+         image,
+         np.zeros((image.shape[0], 2, 3))),
+        axis=1)
+    image = np.concatenate(
+        (image,
+         np.zeros((1, image.shape[1], 3))),axis=0)
+    output = np.copy(image)
+    for y in range(0, output.shape[0] - 1):
+        for x in range(2, output.shape[1] - 2):
+            old_pixel = np.copy(output[y, x, :])
+            new_pixel = findClosest(old_pixel, palette)
+            output[y, x, :] = new_pixel
+
+            # Burkes algorithm
+            quant_err = (old_pixel - new_pixel) / 25
+            output[y, x + 1, :] = output[y, x + 1, :] + quant_err * 5
+            output[y, x + 2, :] = output[y, x + 2, :] + quant_err * 3
+
+            output[y + 1, x - 2, :] = output[y + 1, x - 2, :] + quant_err * 2
+            output[y + 1, x - 1, :] = output[y + 1, x - 1, :] + quant_err * 4
+            output[y + 1, x, :] = output[y + 1, x, :] + quant_err * 5
+            output[y + 1, x + 1, :] = output[y + 1, x + 1, :] + quant_err * 4
+            output[y + 1, x + 2, :] = output[y + 1, x + 2, :] + quant_err * 2
+
+    # Crop the un-converged pixels
+    output = output[:-1,3:-2,:]
+    # Clipping
+    output = np.minimum(output, np.ones(output.shape))
+    output = np.maximum(output, np.zeros(output.shape))
+
+    return output
+
+
+@njit(cache=True)
+def dithering_Sierra(image, palette):
+    # Extend the image dimensions for error diffusion
+    image = np.concatenate(
+        (np.zeros((image.shape[0], 3, 3)),
+         image,
+         np.zeros((image.shape[0], 2, 3))),
+        axis=1)
+    image = np.concatenate(
+        (image,
+         np.zeros((2, image.shape[1], 3))),axis=0)
+    output = np.copy(image)
+    for y in range(0, output.shape[0] - 2):
+        for x in range(2, output.shape[1] - 2):
+            old_pixel = np.copy(output[y, x, :])
+            new_pixel = findClosest(old_pixel, palette)
+            output[y, x, :] = new_pixel
+
+            # Stucki algorithm
+            #             X   8   4
+            # 2   4   8   4   2
+            # 1   2   4   2   1
+
+            quant_err = (old_pixel - new_pixel) / 32
+            output[y, x + 1, :] = output[y, x + 1, :] + quant_err * 5
+            output[y, x + 2, :] = output[y, x + 2, :] + quant_err * 3
+
+            output[y + 1, x - 2, :] = output[y + 1, x - 2, :] + quant_err * 2
+            output[y + 1, x - 1, :] = output[y + 1, x - 1, :] + quant_err * 4
+            output[y + 1, x, :] = output[y + 1, x, :] + quant_err * 5
+            output[y + 1, x + 1, :] = output[y + 1, x + 1, :] + quant_err * 4
+            output[y + 1, x + 2, :] = output[y + 1, x + 2, :] + quant_err * 2
+
+            output[y + 2, x - 1, :] = output[y + 2, x - 1, :] + quant_err * 2
+            output[y + 2, x, :] = output[y + 2, x, :] + quant_err * 2
+            output[y + 2, x + 1, :] = output[y + 2, x + 1, :] + quant_err * 2
+    # Crop the un-converged pixels
+    output = output[:-2,3:-2,:]
+    # Clipping
+    output = np.minimum(output, np.ones(output.shape))
+    output = np.maximum(output, np.zeros(output.shape))
+
+    return output
 
 
 @njit(cache=True)
@@ -441,21 +641,14 @@ class dimg:
         self.algorithm += '_burkes'
         self.result = dithering_Burkes(self.result, self.palette)
     
+    def twoRowSiera(self):
+        self.algorithm += '_twoRowSiera'
+        self.result = dithering_twoRowSierra(self.result, self.palette)
+    
+    def sierra(self):
+        self.algorithm += '_sierra'
+        self.result = dithering_Sierra(self.result, self.palette)
+    
     def save(self):
         output_path = str(self.path)[:-len(self.path.suffix)]+self.algorithm+'.png'
         save_image(self.result, output_path)
-
-
-def precompile():
-    ar= (np.array([[[0, 0, 0], [255, 255, 255]]]) / 255).astype(np.uint8)
-    palette= np.array([[[32, 26, 102],
-                      [191, 59, 38],
-                      [76, 230, 46],
-                      [255, 255, 255]]]) / 255
-    squareCropCoordinate(ar)
-    dithering_atk(ar, palette)
-    dithering_jjn(ar, palette)
-    dithering_fs(ar, palette)
-    dithering_simple(ar, palette)
-    dithering_bayer(ar, palette, 4)
-    print('precompiling done')
