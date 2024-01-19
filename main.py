@@ -8,12 +8,14 @@ import modules.palette as pal
 img_path = 'IN/DSCF9150.JPG'
 
 img = dither.dimg(img_path)
+# img.palette = dither.MEL
+img.square_crop()
 img.resize(target_width=380)
 # img.bayer(16)
 # img.fs()
 # img.atk()
-img.stucki()
-# img.burkes()
+# img.stucki()
+img.burkes()
 img.save()
 
 

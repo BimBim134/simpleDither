@@ -237,7 +237,7 @@ def dithering_Stucki(image, palette):
         (image,
          np.zeros((2, image.shape[1], 3))),axis=0)
     output = np.copy(image)
-    for y in range(0, output.shape[0] - 3):
+    for y in range(0, output.shape[0] - 2):
         for x in range(2, output.shape[1] - 2):
             old_pixel = np.copy(output[y, x, :])
             new_pixel = findClosest(old_pixel, palette)
@@ -264,7 +264,7 @@ def dithering_Stucki(image, palette):
             output[y + 2, x + 1, :] = output[y + 2, x + 1, :] + quant_err * 2
             output[y + 2, x + 2, :] = output[y + 2, x + 2, :] + quant_err * 1
     # Crop the un-converged pixels
-    output = output[0:-3, 3:-3, :]
+    output = output[:-2,3:-2,:]
     # Clipping
     output = np.minimum(output, np.ones(output.shape))
     output = np.maximum(output, np.zeros(output.shape))
@@ -282,9 +282,9 @@ def dithering_Burkes(image, palette):
         axis=1)
     image = np.concatenate(
         (image,
-         np.zeros((2, image.shape[1], 3))),axis=0)
+         np.zeros((1, image.shape[1], 3))),axis=0)
     output = np.copy(image)
-    for y in range(0, output.shape[0] - 3):
+    for y in range(0, output.shape[0] - 1):
         for x in range(2, output.shape[1] - 2):
             old_pixel = np.copy(output[y, x, :])
             new_pixel = findClosest(old_pixel, palette)
@@ -302,7 +302,7 @@ def dithering_Burkes(image, palette):
             output[y + 1, x + 2, :] = output[y + 1, x + 2, :] + quant_err * 2
 
     # Crop the un-converged pixels
-    output = output[0:-3, 3:-3, :]
+    output = output[:-1,3:-2,:]
     # Clipping
     output = np.minimum(output, np.ones(output.shape))
     output = np.maximum(output, np.zeros(output.shape))
@@ -389,7 +389,7 @@ class dimg:
         self.algorithm = ''
 
     def resize(self, target_width=None, target_height=None):
-        img = np.copy(self.img)
+        img = np.copy(self.result)
         if target_width and target_height:
             resized_img = resize(img, (target_width, target_height))
         elif target_width:
@@ -403,47 +403,47 @@ class dimg:
         else:
             raise ValueError("Either target_width or target_height must be specified.")
         self.algorithm += '_resized'  
-        self.img = resized_img
+        self.result = resized_img
     
     def square_crop(self):
         self.algorithm += '_square'
-        self.img = crop(self.img, squareCropCoordinate(self.img))
+        self.result = crop(self.result, squareCropCoordinate(self.result))
 
     def closest(self, dist = 'euclidean'):
         self.algorithm += '_closest'
-        self.img = closest(self.img, self.palette, dist)
+        self.result = closest(self.result, self.palette, dist)
 
     def simple(self):
         self.algorithm += '_simple'
-        self.img = dithering_simple(self.img, self.palette)
+        self.result = dithering_simple(self.result, self.palette)
     
     def fs(self):
         self.algorithm += '_fs'
-        self.img = dithering_fs(self.img, self.palette)
+        self.result = dithering_fs(self.result, self.palette)
 
     def atk(self):
         self.algorithm += '_atk'
-        self.img = dithering_atk(self.img, self.palette)
+        self.result = dithering_atk(self.result, self.palette)
 
     def jjn(self):
         self.algorithm += '_jjn'
-        self.img = dithering_jjn(self.img, self.palette)
+        self.result = dithering_jjn(self.result, self.palette)
     
     def bayer(self, matrix_size):
         self.algorithm += f'_bayer{matrix_size}'
-        self.img = dithering_bayer(self.img, self.palette, matrix_size)
+        self.result = dithering_bayer(self.result, self.palette, matrix_size)
     
     def stucki(self):
         self.algorithm += '_stucki'
-        self.img = dithering_Stucki(self.img, self.palette)
+        self.result = dithering_Stucki(self.result, self.palette)
     
     def burkes(self):
         self.algorithm += '_burkes'
-        self.img = dithering_Burkes(self.img, self.palette)
+        self.result = dithering_Burkes(self.result, self.palette)
     
     def save(self):
         output_path = str(self.path)[:-len(self.path.suffix)]+self.algorithm+'.png'
-        save_image(self.img, output_path)
+        save_image(self.result, output_path)
 
 
 def precompile():
