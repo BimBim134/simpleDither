@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 import argparse
 import simpleDither as sd  # Replace 'dithering_module' with the actual name of your dithering module
+from pprint import pformat
 
-algo_choices = [
-    "closest", "simple", "fs", "atk", "jjn", "burkes", "stucki", "twoRowSiera", "sierra"
-]
 
 def main():
     # Create argument parser
@@ -18,25 +16,37 @@ def main():
     parser.add_argument("-ht", "--height", type=int, help="Height for resizing the image (optional)")
     parser.add_argument("-sc", "--square_crop", action="store_true", help="Perform square crop on the image (optional)")
 
-
-    parser.add_argument("-a", "--algorithm", default="Sierra", choices=algo_choices, help="Dithering algorithm (default: sierra)")
-    parser.add_argument("-m", "--matrix_size", default=16, choices=algo_choices, help="in case of bayer dithering, the matrix size. (it must be = 2^n)")
+    algo_choices = [
+        "closest", "simple", "fs", "atk", "jjn", "burkes", "stucki", "twoRowSiera", "sierra"
+    ]
+    parser.add_argument("-a", "--algorithm", default="sierra", help=f"Dithering algorithm (default: sierra). Available:{pformat(algo_choices)}")
+    parser.add_argument("-m", "--matrix_size", type=int, default=16, help="In case of bayer dithering, the matrix size (it must be = n^2)")
 
     color_choices = [
         'BW', 'PICO8', 'RGB', 'APPLE_II', 'AMSTRAD_CPC', 'COMMODORE_64', 'WLK44', 'TWOBIT_DEMICHROME', 'GAMEBOY' 
     ]
-    parser.add_argument("-c", "--color_palette", default="BW", choices=color_choices, help="Color palette (default: BW)")
+    parser.add_argument("-c", "--color_palette", default="BW", help=f"Color palette (default: BW). Available:{pformat(color_choices)}")
 
-    # Parse the command-line arguments
     args = parser.parse_args()
 
-    # Call the dithering function with the specified parameters
-    # dither_image(image_path=args.image_path, width=args.width, height=args.height, square_crop=args.square_crop,
-    #              algorithm=args.algorithm, color_palette=args.color_palette)
+    img_path = args.path
 
-    print(args)
+    img = sd.dimg(img_path)
+    img.palette = sd.colorPalette[args.color_palette]
+    if args.width or args.height:
+        img.resize(target_width=args.width, target_height=args.height)
+
+    algorithm_name = args.algorithm
+    if hasattr(img, algorithm_name):
+        algorithm_to_execute = getattr(img, algorithm_name)
+        if algorithm_name == 'bayer':
+            algorithm_to_execute(args.matrix_size)
+        else:
+            algorithm_to_execute()
+    else:
+        print(f"Invalid method: {algorithm_name}")
     
-
+    img.save()
 
 if __name__ == "__main__":
     main()

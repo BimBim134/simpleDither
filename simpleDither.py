@@ -171,6 +171,17 @@ GAMEBOY = np.array([[
     [227, 238, 192],    # #e3eec0
 ]])/255
 
+colorPalette = {
+    'BW':BW,
+    'PICO8':PICO8,
+    'RGB':RGB,
+    'APPLE_II':APPLE_II,
+    'AMSTRAD_CPC':AMSTRAD_CPC,
+    'COMMODORE_64':COMMODORE_64,
+    'WLK44':WLK44,
+    'TWOBIT_DEMICHROME':TWOBIT_DEMICHROME,
+    'GAMEBOY':GAMEBOY 
+}
 
 @njit(cache=True)
 def squareCropCoordinate(image):
